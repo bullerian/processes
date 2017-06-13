@@ -39,8 +39,8 @@ int main(int argc, char **argv)
     printf("The Parent #%d is here!\n", (int)getpid());
 
     forked_child = create_child(FORK);
-    create_child(EXEC);
-    create_child(SYSTEM);
+    printf("Exec child #%d\n", create_child(EXEC));
+    printf("System child #%d\n", create_child(SYSTEM));
 
     printf("Waiting for child #%d\n", forked_child);
     waitpid(forked_child, &status, 0);
@@ -49,19 +49,13 @@ int main(int argc, char **argv)
     // daemonize my self
     skeleton_daemon();
 
-    sleep(120);
+    while (1);
     exit(EXIT_SUCCESS);
 }
 
 static pid_t create_child(int mode){
     pid_t child;
     int errsv;
-
-    if (SYSTEM == mode){
-      system("./psspawner SYSTEM 20");
-      return 0;
-      //system("echo SYSTEM 180");
-    }
 
     switch (child=fork()) {
     // error case
@@ -76,7 +70,7 @@ static pid_t create_child(int mode){
         switch (mode) {
         case EXEC:
             // TODO: replace hardcoded program name
-            execl(&app_path[0], "psspawner", "EXECL", "30", (char *)NULL);
+            execl(&app_path[0], "psspawner", "EXECL", "30", NULL);
             errsv=errno;
             // should not reach here
             printf("Something is really wrong, here is the error #%d", errsv);
@@ -87,13 +81,12 @@ static pid_t create_child(int mode){
             counterAm("FORK", 10);
             exit(EXIT_SUCCESS);
             break;
-        // case SYSTEM:
-        //     // TODO: replace hardcoded program name
-        //     // and just ignore the retval
-        //     system("./psspawner SYSTEM 80");
-        //     //system("echo SYSTEM 180");
-        //     exit(EXIT_SUCCESS);
-        //     break;
+        case SYSTEM:
+            // TODO: replace hardcoded program name
+            // and just ignore the retval
+            system("./psspawner SYSTEM 20");
+            exit(EXIT_SUCCESS);
+            break;
         default:
             printf("%d is invalid child creation mode\n", mode);
             exit(EXIT_FAILURE);
@@ -106,9 +99,8 @@ static pid_t create_child(int mode){
         return child;
         break;
     }
-
     // shouldn't reach here
-    return 1;
+    return -1;
 }
 
 static void counterAm(char * name, int max_count){
