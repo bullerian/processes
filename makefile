@@ -1,4 +1,4 @@
-TARGET				 := process
+TARGET				 := psspawner
 SRC					 := main.c
 INCL				 := include
 OBJS  			 	 = $(SRC:.c=.o)

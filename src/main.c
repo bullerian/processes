@@ -49,7 +49,6 @@ int main(int argc, char **argv)
     // daemonize my self
     skeleton_daemon();
 
-
     exit(EXIT_SUCCESS);
 }
 
@@ -70,7 +69,7 @@ static pid_t create_child(int mode){
         switch (mode) {
         case EXEC:
             // TODO: replace hardcoded program name
-            execl(&app_path[0], "process", "EXECL", "120", (char *)NULL);
+            execl(&app_path[0], "psspawner", "EXECL", "120", (char *)NULL);
             errsv=errno;
             // should not reach here
             printf("Something is really wrong, here is the error #%d", errsv);
@@ -84,7 +83,9 @@ static pid_t create_child(int mode){
         case SYSTEM:
             // TODO: replace hardcoded program name
             // and just ignore the retval
-            system("./process SYSTEM 180");
+            //system("./psspawner SYSTEM 180");
+            system("echo SYSTEM 180");
+            exit(EXIT_SUCCESS);
             break;
         default:
             printf("%d is invalid child creation mode\n", mode);
@@ -106,13 +107,13 @@ static pid_t create_child(int mode){
 static void counterAm(char * name, int max_count){
     int counter=0;
 
-    printf("\t%s child, PID=%d count_val=%d\n", name, (int)getpid(), max_count);
+    printf("%s child, PID=%d, count_val=%d\n", name, (int)getpid(), max_count);
 
     while (++counter <= max_count){
         printf("\t(Child %s says): \t%d\n", name, counter);
         sleep(1);
     }
-    printf("\t(Child %s done counting)\n", name);
+    printf("%s child done counting\n", name);
 }
 
 static void skeleton_daemon(void){
@@ -122,34 +123,42 @@ static void skeleton_daemon(void){
     // fork from parent
     pid = fork();
 
-    // there is some eror
-    if (pid < 0)
+    // there was some eror
+    if (pid < 0){
         errsv = errno;
-        printf("First fork was defective! Errorn num %d\n", errsv);
+        printf("First fork error! PID=%d errorn num %d\n", pid, errsv);
         exit(EXIT_FAILURE);
-
-    // forking was succesfull. parent can terminate
-    if (pid > 0)
+      }
+      // forking was succesfull. parent can terminate
+      else if (pid > 0){
         exit(EXIT_SUCCESS);
+      }
 
     // set child as leader
-    if (setsid() < 0)
+    if (setsid() < 0){
         printf("Now I'm a laeder!\n");
-        exit(EXIT_FAILURE);
+        exit(EXIT_SUCCESS);
+      }
 
     // fork again to hide the trails
     pid = fork();
 
-    //just in case
-    umask(0);
-    chdir("/");
-
     // second fork is broken
-    if (pid < 0)
+    if (pid < 0){
+        errsv = errno;
+        printf("Second fork error! PID=%d errorn num %d\n", pid, errsv);
         exit(EXIT_FAILURE);
+      }
+      // forking was succesfull. parent can terminate
+      else if (pid > 0){
+          exit(EXIT_SUCCESS);
+        }
 
-    // forking was succesfull. parent can terminate
-    if (pid > 0)
-        exit(EXIT_SUCCESS);
+      //just in case
+      umask(0);
+      chdir("/");
+
     // now it's a daemon!
+    // but this message can't be printed, becasue now process has
+    // no streams connected
 }
