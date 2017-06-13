@@ -49,12 +49,19 @@ int main(int argc, char **argv)
     // daemonize my self
     skeleton_daemon();
 
+    sleep(120);
     exit(EXIT_SUCCESS);
 }
 
 static pid_t create_child(int mode){
     pid_t child;
     int errsv;
+
+    if (SYSTEM == mode){
+      system("./psspawner SYSTEM 20");
+      return 0;
+      //system("echo SYSTEM 180");
+    }
 
     switch (child=fork()) {
     // error case
@@ -69,7 +76,7 @@ static pid_t create_child(int mode){
         switch (mode) {
         case EXEC:
             // TODO: replace hardcoded program name
-            execl(&app_path[0], "psspawner", "EXECL", "120", (char *)NULL);
+            execl(&app_path[0], "psspawner", "EXECL", "30", (char *)NULL);
             errsv=errno;
             // should not reach here
             printf("Something is really wrong, here is the error #%d", errsv);
@@ -77,16 +84,16 @@ static pid_t create_child(int mode){
             break;
         case FORK:
             // already forked, so just count
-            counterAm("FORK", 40);
+            counterAm("FORK", 10);
             exit(EXIT_SUCCESS);
             break;
-        case SYSTEM:
-            // TODO: replace hardcoded program name
-            // and just ignore the retval
-            //system("./psspawner SYSTEM 180");
-            system("echo SYSTEM 180");
-            exit(EXIT_SUCCESS);
-            break;
+        // case SYSTEM:
+        //     // TODO: replace hardcoded program name
+        //     // and just ignore the retval
+        //     system("./psspawner SYSTEM 80");
+        //     //system("echo SYSTEM 180");
+        //     exit(EXIT_SUCCESS);
+        //     break;
         default:
             printf("%d is invalid child creation mode\n", mode);
             exit(EXIT_FAILURE);
@@ -136,7 +143,6 @@ static void skeleton_daemon(void){
 
     // set child as leader
     if (setsid() < 0){
-        printf("Now I'm a laeder!\n");
         exit(EXIT_SUCCESS);
       }
 
@@ -145,8 +151,6 @@ static void skeleton_daemon(void){
 
     // second fork is broken
     if (pid < 0){
-        errsv = errno;
-        printf("Second fork error! PID=%d errorn num %d\n", pid, errsv);
         exit(EXIT_FAILURE);
       }
       // forking was succesfull. parent can terminate
